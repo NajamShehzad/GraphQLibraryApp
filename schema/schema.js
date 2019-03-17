@@ -34,7 +34,7 @@ var authors = [
 const BookType = new GraphQLObjectType({
     name: 'Book',
     fields: () => ({
-        id: {
+        _id: {
             type: GraphQLID
         },
         name: {
@@ -47,7 +47,7 @@ const BookType = new GraphQLObjectType({
             type: AuthorType,
             resolve(parent, args) {
                 console.log(parent);
-                return _.find(authors, { id: parent.authorId })
+                return Author.findOne({ _id: parent.authorId });
             }
         }
     })
@@ -55,7 +55,7 @@ const BookType = new GraphQLObjectType({
 const AuthorType = new GraphQLObjectType({
     name: 'Author',
     fields: () => ({
-        id: {
+        _id: {
             type: GraphQLID
         },
         name: {
@@ -67,7 +67,7 @@ const AuthorType = new GraphQLObjectType({
         books: {
             type: new GraphQLList(BookType),
             resolve(parent, args) {
-                return _.filter(books, { authorId: parent.id })
+                // return _.filter(books, { authorId: parent.id })
             }
         }
     })
@@ -79,23 +79,23 @@ const RootQuery = new GraphQLObjectType({
         book: {
             type: BookType,
             args: {
-                id: {
+                _id: {
                     type: GraphQLID
                 }
             },
             resolve(parent, args) {
-                return _.find(books, { id: args.id });
+                return Book.findOne({ _id: args._id });
             }
         },
         author: {
             type: AuthorType,
             args: {
-                id: {
+                _id: {
                     type: GraphQLID
                 }
             },
             resolve(parent, args) {
-                return _.find(authors, { id: args.id });
+                // return _.find(authors, { id: args.id });
             }
         },
         books: {
@@ -113,6 +113,47 @@ const RootQuery = new GraphQLObjectType({
     })
 });
 
+const Mutation = new GraphQLObjectType({
+    name: 'Mutation',
+    fields: {
+        addAuthor: {
+            type: AuthorType,
+            args: {
+                name: { type: GraphQLString },
+                age: { type: GraphQLInt }
+            },
+            async resolve(parent, args) {
+                try {
+                    let newAuthor = new Author({ name: args.name, age: args.age });
+                    let authorData = await newAuthor.save();
+                    console.log(authorData);
+                    return authorData;
+                } catch (err) {
+
+                }
+            }
+        },
+        addBook: {
+            type: BookType,
+            args: {
+                name: { type: GraphQLString },
+                genre: { type: GraphQLString },
+                authorId: { type: GraphQLID }
+            },
+            async resolve(parent, args) {
+                try {
+                    let newBook = new Book({ name: args.name, authorId: args.authorId, genre: args.genre });
+                    return newBook.save();
+
+                } catch (err) {
+
+                }
+            }
+        }
+    }
+})
+
 module.exports = new GraphQLSchema({
-    query: RootQuery
+    query: RootQuery,
+    mutation: Mutation
 })
