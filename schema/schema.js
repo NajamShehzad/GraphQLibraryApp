@@ -9,7 +9,8 @@ const {
     GraphQLString,
     GraphQLID,
     GraphQLInt,
-    GraphQLList
+    GraphQLList,
+    GraphQLNonNull
 } = graphql;
 
 
@@ -67,7 +68,7 @@ const AuthorType = new GraphQLObjectType({
         books: {
             type: new GraphQLList(BookType),
             resolve(parent, args) {
-                // return _.filter(books, { authorId: parent.id })
+                return Book.find({ authorId: parent._id });
             }
         }
     })
@@ -84,7 +85,7 @@ const RootQuery = new GraphQLObjectType({
                 }
             },
             resolve(parent, args) {
-                return Book.findOne({ _id: args._id });
+                return Book.findOne({ _id: args._id }); x
             }
         },
         author: {
@@ -95,19 +96,19 @@ const RootQuery = new GraphQLObjectType({
                 }
             },
             resolve(parent, args) {
-                // return _.find(authors, { id: args.id });
+                return Author.findById(args._id);
             }
         },
         books: {
             type: new GraphQLList(BookType),
             resolve() {
-                return books;
+                return Book.find({});
             }
         },
         authors: {
             type: new GraphQLList(AuthorType),
             resolve() {
-                return authors
+                return Author.find({})
             }
         }
     })
@@ -119,8 +120,8 @@ const Mutation = new GraphQLObjectType({
         addAuthor: {
             type: AuthorType,
             args: {
-                name: { type: GraphQLString },
-                age: { type: GraphQLInt }
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                age: { type: new GraphQLNonNull(GraphQLInt) }
             },
             async resolve(parent, args) {
                 try {
@@ -136,9 +137,9 @@ const Mutation = new GraphQLObjectType({
         addBook: {
             type: BookType,
             args: {
-                name: { type: GraphQLString },
-                genre: { type: GraphQLString },
-                authorId: { type: GraphQLID }
+                name: { type: new GraphQLNonNull(GraphQLString) },
+                genre: { type: new GraphQLNonNull(GraphQLString) },
+                authorId: { type: new GraphQLNonNull(GraphQLID) }
             },
             async resolve(parent, args) {
                 try {
